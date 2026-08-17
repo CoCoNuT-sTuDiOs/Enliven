@@ -129,10 +129,19 @@ def animate_body(
 
     pipeline = create_pipeline(infer_config, device)
 
+    # Cast every component to float16 consistently. vae/image_encoder are
+    # already loaded as fp16 (hardcoded in MimicMotion's loader.py); unet
+    # and pose_net default to fp32 unless cast explicitly here.
+    pipeline.unet = pipeline.unet.to(torch.float16)
+    pipeline.pose_net = pipeline.pose_net.to(torch.float16)
+
     pose_pixels, image_pixels = _preprocess(
         driving_video_path, avatar_path, aspect_ratio,
         resolution=resolution, sample_stride=sample_stride,
     )
+
+    image_pixels = image_pixels.to(torch.float16)
+    pose_pixels = pose_pixels.to(torch.float16)
 
     video_frames = _run_pipeline(
         pipeline, image_pixels, pose_pixels, device,
