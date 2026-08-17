@@ -17,9 +17,6 @@ def transfer_expression(
     flag_do_crop: bool = True,
     flag_pasteback: bool = True,
 ) -> str:
-    if liveportrait_dir not in sys.path:
-        sys.path.insert(0, liveportrait_dir)
-
     # LivePortrait's own modules assume being run from its own directory
     # (relative imports, relative default paths) — matching how its own
     # inference.py is normally invoked.
