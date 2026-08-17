@@ -134,6 +134,8 @@ def animate_body(
     # and pose_net default to fp32 unless cast explicitly here.
     pipeline.unet = pipeline.unet.to(torch.float16)
     pipeline.pose_net = pipeline.pose_net.to(torch.float16)
+    pipeline.vae = pipeline.vae.to(torch.float16)
+    pipeline.image_encoder = pipeline.image_encoder.to(torch.float16)
 
     pose_pixels, image_pixels = _preprocess(
         driving_video_path, avatar_path, aspect_ratio,
