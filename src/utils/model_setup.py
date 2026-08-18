@@ -217,3 +217,132 @@ def clear_import_caches():
     sys.path_importer_cache.clear()
     importlib.invalidate_caches()
     print("[model_setup] Import caches cleared.")
+
+def patch_mimicmotion_video_writer(mimicmotion_dir):
+    from pathlib import Path
+    utils_path = Path(mimicmotion_dir) / "mimicmotion" / "utils" / "utils.py"
+    original = utils_path.read_text()
+
+    old_block = (
+        "import logging\n"
+        "from pathlib import Path\n"
+        "from torchvision.io import write_video\n"
+        "logger = logging.getLogger(__name__)\n"
+        "def save_to_mp4(frames, save_path, fps=7):\n"
+        "    frames = frames.permute((0, 2, 3, 1))  # (f, c, h, w) to (f, h, w, c)\n"
+        "    Path(save_path).parent.mkdir(parents=True, exist_ok=True)\n"
+        "    write_video(save_path, frames, fps=fps)"
+    )
+
+    new_block = (
+        "import logging\n"
+        "from pathlib import Path\n"
+        "import numpy as np\n"
+        "import imageio\n"
+        "logger = logging.getLogger(__name__)\n"
+        "def save_to_mp4(frames, save_path, fps=7):\n"
+        "    frames = frames.permute((0, 2, 3, 1))  # (f, c, h, w) to (f, h, w, c)\n"
+        "    Path(save_path).parent.mkdir(parents=True, exist_ok=True)\n"
+        "    frames = frames.detach().cpu().numpy()\n"
+        "    if frames.dtype != np.uint8:\n"
+        "        frames = frames.astype(np.uint8)\n"
+        "    writer = imageio.get_writer(save_path, fps=fps, codec=\"libx264\", format=\"FFMPEG\")\n"
+        "    for frame in frames:\n"
+        "        writer.append_data(frame)\n"
+        "    writer.close()"
+    )
+
+    if old_block not in original:
+        raise RuntimeError(
+            "patch_mimicmotion_video_writer: expected original save_to_mp4 block "
+            "not found — file may have changed upstream, check before patching."
+        )
+
+    utils_path.write_text(original.replace(old_block, new_block))
+    print("Patched MimicMotion save_to_mp4() to use imageio instead of torchvision.io.write_video")
+
+def patch_mimicmotion_video_writer(mimicmotion_dir):
+    from pathlib import Path
+    utils_path = Path(mimicmotion_dir) / "mimicmotion" / "utils" / "utils.py"
+    original = utils_path.read_text()
+
+    old_block = (
+        "import logging\n"
+        "from pathlib import Path\n"
+        "from torchvision.io import write_video\n"
+        "logger = logging.getLogger(__name__)\n"
+        "def save_to_mp4(frames, save_path, fps=7):\n"
+        "    frames = frames.permute((0, 2, 3, 1))  # (f, c, h, w) to (f, h, w, c)\n"
+        "    Path(save_path).parent.mkdir(parents=True, exist_ok=True)\n"
+        "    write_video(save_path, frames, fps=fps)"
+    )
+
+    new_block = (
+        "import logging\n"
+        "from pathlib import Path\n"
+        "import numpy as np\n"
+        "import imageio\n"
+        "logger = logging.getLogger(__name__)\n"
+        "def save_to_mp4(frames, save_path, fps=7):\n"
+        "    frames = frames.permute((0, 2, 3, 1))  # (f, c, h, w) to (f, h, w, c)\n"
+        "    Path(save_path).parent.mkdir(parents=True, exist_ok=True)\n"
+        "    frames = frames.detach().cpu().numpy()\n"
+        "    if frames.dtype != np.uint8:\n"
+        "        frames = frames.astype(np.uint8)\n"
+        "    writer = imageio.get_writer(save_path, fps=fps, codec=\"libx264\", format=\"FFMPEG\")\n"
+        "    for frame in frames:\n"
+        "        writer.append_data(frame)\n"
+        "    writer.close()"
+    )
+
+    if old_block not in original:
+        raise RuntimeError(
+            "patch_mimicmotion_video_writer: expected original save_to_mp4 block "
+            "not found — file may have changed upstream, check before patching."
+        )
+
+    utils_path.write_text(original.replace(old_block, new_block))
+    print("Patched MimicMotion save_to_mp4() to use imageio instead of torchvision.io.write_video")
+
+def patch_mimicmotion_video_writer(mimicmotion_dir):
+    from pathlib import Path
+    utils_path = Path(mimicmotion_dir) / "mimicmotion" / "utils" / "utils.py"
+    original = utils_path.read_text()
+
+    old_block = (
+        "import logging\n"
+        "from pathlib import Path\n"
+        "from torchvision.io import write_video\n"
+        "logger = logging.getLogger(__name__)\n"
+        "def save_to_mp4(frames, save_path, fps=7):\n"
+        "    frames = frames.permute((0, 2, 3, 1))  # (f, c, h, w) to (f, h, w, c)\n"
+        "    Path(save_path).parent.mkdir(parents=True, exist_ok=True)\n"
+        "    write_video(save_path, frames, fps=fps)"
+    )
+
+    new_block = (
+        "import logging\n"
+        "from pathlib import Path\n"
+        "import numpy as np\n"
+        "import imageio\n"
+        "logger = logging.getLogger(__name__)\n"
+        "def save_to_mp4(frames, save_path, fps=7):\n"
+        "    frames = frames.permute((0, 2, 3, 1))  # (f, c, h, w) to (f, h, w, c)\n"
+        "    Path(save_path).parent.mkdir(parents=True, exist_ok=True)\n"
+        "    frames = frames.detach().cpu().numpy()\n"
+        "    if frames.dtype != np.uint8:\n"
+        "        frames = frames.astype(np.uint8)\n"
+        "    writer = imageio.get_writer(save_path, fps=fps, codec=\"libx264\", format=\"FFMPEG\")\n"
+        "    for frame in frames:\n"
+        "        writer.append_data(frame)\n"
+        "    writer.close()"
+    )
+
+    if old_block not in original:
+        raise RuntimeError(
+            "patch_mimicmotion_video_writer: expected original save_to_mp4 block "
+            "not found — file may have changed upstream, check before patching."
+        )
+
+    utils_path.write_text(original.replace(old_block, new_block))
+    print("Patched MimicMotion save_to_mp4() to use imageio instead of torchvision.io.write_video")
