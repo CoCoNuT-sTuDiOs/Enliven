@@ -1,6 +1,17 @@
 """
 body_animate.py
 
+Stage 2 of the Enliven pipeline: takes an avatar photo + a driving video,
+returns a video of the avatar performing that motion.
+
+This is a direct, faithful port of MimicMotion's own inference.py logic
+(preprocess() + run_pipeline() + main()'s loop body), wrapped as a single
+reusable function instead of a CLI script tied to a config file.
+
+Requires MimicMotion's repo to be cloned and on the Python path, and its
+dependencies installed/patched first — see src/utils/model_setup.py:
+    install_mimicmotion_deps()
+    patch_mimicmotion(mimicmotion_dir)
 """
 
 import os
@@ -97,71 +108,71 @@ def animate_body(
     if mimicmotion_dir not in sys.path:
         sys.path.insert(0, mimicmotion_dir)
 
-    from mimicmotion.utils.geglu_patch import patch_geglu_inplace
-    patch_geglu_inplace()
-
-    from mimicmotion.utils.loader import create_pipeline
-    from mimicmotion.utils.utils import save_to_mp4
-
-    constants_path = os.path.join(mimicmotion_dir, "constants.py")
-    aspect_ratio_ns = {}
-    with open(constants_path) as f:
-        exec(f.read(), aspect_ratio_ns)
-    aspect_ratio = aspect_ratio_ns["ASPECT_RATIO"]
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    infer_config = OmegaConf.create({
-        "base_model_path": "stabilityai/stable-video-diffusion-img2vid-xt-1-1",
-        "ckpt_path": os.path.join(mimicmotion_dir, "models", "MimicMotion_1-1.pth"),
-    })
-
-    pipeline = create_pipeline(infer_config, device)
-
-    # Cast every component to float16 consistently. vae/image_encoder are
-    # already loaded as fp16 (hardcoded in MimicMotion's loader.py); unet
-    # and pose_net default to fp32 unless cast explicitly here.
-    pipeline.unet = pipeline.unet.to(torch.float16)
-    pipeline.pose_net = pipeline.pose_net.to(torch.float16)
-    pipeline.vae = pipeline.vae.to(torch.float16)
-    pipeline.image_encoder = pipeline.image_encoder.to(torch.float16)
-
-    # DWPose (used inside _preprocess) resolves its model paths (e.g.
-    # models/DWPose/yolox_l.onnx) relative to cwd, not relative to
-    # mimicmotion_dir. Since this stage is direct-imported into the same
-    # process as the rest of the pipeline, cwd is whatever the caller's
-    # cwd was (e.g. /kaggle/working/Enliven), not MimicMotion's own folder.
-    # Scope a chdir around just this call, always restoring cwd after,
-    # so no other stage/path in the pipeline is affected.
+    # DWPose's onnxruntime session appears to be constructed eagerly
+    # somewhere in mimicmotion's import chain (not lazily inside
+    # get_video_pose/get_image_pose), baking in a relative path resolved
+    # against whatever cwd was active at that moment. So the chdir has to
+    # wrap the FIRST mimicmotion import all the way through save_to_mp4,
+    # not just the _preprocess() call.
     original_cwd = os.getcwd()
     try:
         os.chdir(mimicmotion_dir)
+
+        from mimicmotion.utils.geglu_patch import patch_geglu_inplace
+        patch_geglu_inplace()
+
+        from mimicmotion.utils.loader import create_pipeline
+        from mimicmotion.utils.utils import save_to_mp4
+
+        constants_path = os.path.join(mimicmotion_dir, "constants.py")
+        aspect_ratio_ns = {}
+        with open(constants_path) as f:
+            exec(f.read(), aspect_ratio_ns)
+        aspect_ratio = aspect_ratio_ns["ASPECT_RATIO"]
+
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        infer_config = OmegaConf.create({
+            "base_model_path": "stabilityai/stable-video-diffusion-img2vid-xt-1-1",
+            "ckpt_path": os.path.join(mimicmotion_dir, "models", "MimicMotion_1-1.pth"),
+        })
+
+        pipeline = create_pipeline(infer_config, device)
+
+        # Cast every component to float16 consistently. vae/image_encoder are
+        # already loaded as fp16 (hardcoded in MimicMotion's loader.py); unet
+        # and pose_net default to fp32 unless cast explicitly here.
+        pipeline.unet = pipeline.unet.to(torch.float16)
+        pipeline.pose_net = pipeline.pose_net.to(torch.float16)
+        pipeline.vae = pipeline.vae.to(torch.float16)
+        pipeline.image_encoder = pipeline.image_encoder.to(torch.float16)
+
         pose_pixels, image_pixels = _preprocess(
             driving_video_path, avatar_path, aspect_ratio,
             resolution=resolution, sample_stride=sample_stride,
         )
+
+        image_pixels = image_pixels.to(torch.float16)
+        pose_pixels = pose_pixels.to(torch.float16)
+
+        video_frames = _run_pipeline(
+            pipeline, image_pixels, pose_pixels, device,
+            num_frames=pose_pixels.size(0),
+            tile_size=num_frames,
+            tile_overlap=frames_overlap,
+            noise_aug_strength=noise_aug_strength,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            seed=seed,
+        )
+
+        os.makedirs(output_dir, exist_ok=True)
+        output_name = os.path.basename(driving_video_path).split(".")[0]
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        output_path = os.path.join(output_dir, f"{output_name}_{timestamp}.mp4")
+
+        save_to_mp4(video_frames, output_path, fps=fps)
     finally:
         os.chdir(original_cwd)
-
-    image_pixels = image_pixels.to(torch.float16)
-    pose_pixels = pose_pixels.to(torch.float16)
-
-    video_frames = _run_pipeline(
-        pipeline, image_pixels, pose_pixels, device,
-        num_frames=pose_pixels.size(0),
-        tile_size=num_frames,
-        tile_overlap=frames_overlap,
-        noise_aug_strength=noise_aug_strength,
-        num_inference_steps=num_inference_steps,
-        guidance_scale=guidance_scale,
-        seed=seed,
-    )
-
-    os.makedirs(output_dir, exist_ok=True)
-    output_name = os.path.basename(driving_video_path).split(".")[0]
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    output_path = os.path.join(output_dir, f"{output_name}_{timestamp}.mp4")
-
-    save_to_mp4(video_frames, output_path, fps=fps)
 
     return output_path
