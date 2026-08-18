@@ -171,3 +171,49 @@ def install_wav2lip_deps():
     """
     _run("pip install librosa opencv-python numba tqdm --quiet")
     print("[model_setup] Wav2Lip dependencies installed.")
+
+
+def fix_numpy_binary_incompatibility():
+    """
+    Fixes a recurring "numpy.dtype size changed, may indicate binary
+    incompatibility" / "No module named 'numpy.rec'" error hit repeatedly
+    across this project. Root cause: installing MimicMotion's, LivePortrait's,
+    and Wav2Lip's dependencies (each independently) can leave numpy's
+    compiled C extensions in a mixed/inconsistent state, even when
+    `pip show numpy` reports a single correct version number.
+
+    MUST be called LAST, after every other repo's install_*_deps() call —
+    not before. Any subsequent pip install of another repo's requirements
+    can re-trigger the corruption, so calling this too early doesn't help.
+
+    IMPORTANT: after calling this, the Kaggle kernel MUST be restarted
+    before numpy (or anything importing it, e.g. torchvision, scipy) is
+    used again. Numpy's C extensions cannot be cleanly reloaded within
+    the same running Python process — clearing sys.modules is NOT enough.
+    This function cannot restart the kernel itself; the caller must do
+    Run -> Restart Session manually afterward.
+    """
+    _run("pip uninstall numpy scipy torchvision -y --quiet")
+    _run("pip install --no-cache-dir --force-reinstall numpy==1.26.4 scipy torchvision --quiet")
+    print("[model_setup] numpy/scipy/torchvision reinstalled. "
+          "RESTART THE KERNEL NOW before running anything that imports numpy.")
+
+
+def clear_import_caches():
+    """
+    Clears not just sys.modules but also Python's path-based import
+    caches. Needed after a fresh git clone in the same running kernel —
+    clearing sys.modules alone has repeatedly been insufficient in this
+    project, leaving Python unable to find freshly-cloned packages (e.g.
+    "ModuleNotFoundError: No module named 'src.utils'" even when the file
+    genuinely exists on disk).
+    """
+    import sys
+    import importlib
+
+    for mod in list(sys.modules):
+        if mod.startswith("src") or mod == "pipeline":
+            del sys.modules[mod]
+    sys.path_importer_cache.clear()
+    importlib.invalidate_caches()
+    print("[model_setup] Import caches cleared.")
