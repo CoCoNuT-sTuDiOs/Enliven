@@ -1,17 +1,6 @@
 """
 body_animate.py
 
-Stage 2 of the Enliven pipeline: takes an avatar photo + a driving video,
-returns a video of the avatar performing that motion.
-
-This is a direct, faithful port of MimicMotion's own inference.py logic
-(preprocess() + run_pipeline() + main()'s loop body), wrapped as a single
-reusable function instead of a CLI script tied to a config file.
-
-Requires MimicMotion's repo to be cloned and on the Python path, and its
-dependencies installed/patched first — see src/utils/model_setup.py:
-    install_mimicmotion_deps()
-    patch_mimicmotion(mimicmotion_dir)
 """
 
 import os
@@ -137,10 +126,22 @@ def animate_body(
     pipeline.vae = pipeline.vae.to(torch.float16)
     pipeline.image_encoder = pipeline.image_encoder.to(torch.float16)
 
-    pose_pixels, image_pixels = _preprocess(
-        driving_video_path, avatar_path, aspect_ratio,
-        resolution=resolution, sample_stride=sample_stride,
-    )
+    # DWPose (used inside _preprocess) resolves its model paths (e.g.
+    # models/DWPose/yolox_l.onnx) relative to cwd, not relative to
+    # mimicmotion_dir. Since this stage is direct-imported into the same
+    # process as the rest of the pipeline, cwd is whatever the caller's
+    # cwd was (e.g. /kaggle/working/Enliven), not MimicMotion's own folder.
+    # Scope a chdir around just this call, always restoring cwd after,
+    # so no other stage/path in the pipeline is affected.
+    original_cwd = os.getcwd()
+    try:
+        os.chdir(mimicmotion_dir)
+        pose_pixels, image_pixels = _preprocess(
+            driving_video_path, avatar_path, aspect_ratio,
+            resolution=resolution, sample_stride=sample_stride,
+        )
+    finally:
+        os.chdir(original_cwd)
 
     image_pixels = image_pixels.to(torch.float16)
     pose_pixels = pose_pixels.to(torch.float16)
