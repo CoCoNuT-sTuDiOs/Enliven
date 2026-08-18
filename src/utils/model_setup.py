@@ -346,3 +346,28 @@ def patch_mimicmotion_video_writer(mimicmotion_dir):
 
     utils_path.write_text(original.replace(old_block, new_block))
     print("Patched MimicMotion save_to_mp4() to use imageio instead of torchvision.io.write_video")
+
+
+def patch_mimicmotion_dwpose_path(mimicmotion_dir):
+    """Fix DWPose's eager-loaded relative ONNX paths to be cwd-independent."""
+    import os
+    path = os.path.join(mimicmotion_dir, "mimicmotion/dwpose/dwpose_detector.py")
+    with open(path, "r") as f:
+        content = f.read()
+    if "_MIMICMOTION_ROOT" in content:
+        return  # already patched
+    content = content.replace(
+        "import os",
+        "import os\n_MIMICMOTION_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))",
+        1
+    )
+    content = content.replace(
+        'model_det="models/DWPose/yolox_l.onnx",',
+        'model_det=os.path.join(_MIMICMOTION_ROOT, "models/DWPose/yolox_l.onnx"),'
+    )
+    content = content.replace(
+        'model_pose="models/DWPose/dw-ll_ucoco_384.onnx",',
+        'model_pose=os.path.join(_MIMICMOTION_ROOT, "models/DWPose/dw-ll_ucoco_384.onnx"),'
+    )
+    with open(path, "w") as f:
+        f.write(content)
