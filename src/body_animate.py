@@ -15,6 +15,8 @@ dependencies installed/patched first — see src/utils/model_setup.py:
 """
 
 import os
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:256"
+
 import sys
 import math
 from datetime import datetime
@@ -80,7 +82,7 @@ def _run_pipeline(pipeline, image_pixels, pose_pixels, device, num_frames,
         generator=generator,
         min_guidance_scale=guidance_scale,
         max_guidance_scale=guidance_scale,
-        decode_chunk_size=8,
+        decode_chunk_size=4,
         output_type="pt",
         device=device,
     ).frames.cpu()

@@ -42,6 +42,7 @@ def generate(
     Returns:
         Path to the final generated video.
     """
+    output_dir = os.path.abspath(output_dir)
     os.makedirs(output_dir, exist_ok=True)
 
     print("[1/3] Animating body (MimicMotion)...")
@@ -61,7 +62,7 @@ def generate(
         source_path=body_video,
         driving_video_path=driving_video_path,
         liveportrait_dir=liveportrait_dir,
-        output_dir=os.path.join(os.path.abspath(output_dir)),
+        output_dir=output_dir,
     )
     print(f"  -> {expression_video}")
 
