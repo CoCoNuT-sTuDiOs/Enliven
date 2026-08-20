@@ -65,7 +65,8 @@ class HeadAnimator:
         pose_img = self._draw_keypoints(source_image.size, keypoints)
 
         result = self.pipe(
-            prompt="a person with natural head movement, same face, photorealistic",
+            prompt="photo of a real person, sharp focus, natural skin texture, DSLR, 8k uhd",
+            negative_prompt="painting, illustration, canvas texture, grainy, blurry, low quality, cartoon, cgi",
             image=source_image,               # img2img base = the actual avatar photo
             control_image=pose_img,            # ControlNet steers pose only
             strength=strength,
