@@ -23,7 +23,7 @@ class HeadAnimator:
 
         # Load ControlNet for pose guidance
         self.controlnet = ControlNetModel.from_pretrained(
-            "fusing/stable-diffusion-v1-5-controlnet-pose",
+            "lllyasviel/sd-controlnet-openpose",
             torch_dtype=dtype
         ).to(self.device)
 
@@ -118,7 +118,7 @@ class HeadAnimator:
         Draw pose control image from 5 face keypoints
         (nose, left_eye, right_eye, left_ear, right_ear).
 
-        NOTE: fusing/stable-diffusion-v1-5-controlnet-pose was trained on
+        NOTE: lllyasviel/sd-controlnet-openpose was trained on
         full OpenPose skeletons (colored limb lines on a BLACK canvas), not
         isolated dots on white. With only 5 face points we can't draw real
         limbs, but matching the black background + OpenPose-style coloring
