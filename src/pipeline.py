@@ -8,7 +8,7 @@ Stages:
 """
 import os
 from src.expression_transfer import transfer_expression
-from src.lip_sync import sync_lip_sync
+from src.lip_sync import sync_lips
 from src.enhance import FaceEnhancer
 
 def generate(
@@ -75,11 +75,25 @@ def generate(
         # Stage 2: Wav2Lip (if audio)
         if audio_path:
             print("[ENLIVEN] Stage 2: Wav2Lip (mouth sync)...")
-            wav2lip_output = os.path.join(output_dir, "result_wav2lip.mp4")
-            sync_lip_sync(
+            # Auto-detect Wav2Lip
+            wav2lip_dir = None
+            home = os.path.expanduser("~")
+            possible_paths = [
+                os.path.join(home, "Wav2Lip"),
+                "/kaggle/working/Wav2Lip",
+                "./Wav2Lip",
+            ]
+            for path in possible_paths:
+                if os.path.exists(path):
+                    wav2lip_dir = path
+                    break
+            if wav2lip_dir is None:
+                raise RuntimeError("Wav2Lip not found. Clone it or specify path.")
+            
+            wav2lip_output = sync_lips(
                 video_path=current_video,
                 audio_path=audio_path,
-                output_path=wav2lip_output
+                wav2lip_dir=wav2lip_dir
             )
             print(f"[ENLIVEN] ✓ Stage 2 done: {wav2lip_output}")
             current_video = wav2lip_output
