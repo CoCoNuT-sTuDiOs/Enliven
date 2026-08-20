@@ -21,16 +21,40 @@ def main():
     parser.add_argument("--output", default="result.mp4", help="Output video path")
     parser.add_argument("--enhance", action="store_true", help="Apply GFPGAN face enhancement")
     parser.add_argument("--output_dir", default="enliven_output", help="Temp output directory")
-    
+    parser.add_argument(
+        "--test_fps", type=int, default=None,
+        help="Downsample Stage 2 animation to this fps (e.g. 8-10) to save GPU quota "
+             "during smoke tests. Omit for full quality (uses driving video's native fps)."
+    )
+    parser.add_argument(
+        "--steps", type=int, default=20,
+        help="Diffusion steps per frame in Stage 2. Lower (10-12) = faster/cheaper, "
+             "worse quality. Use low values for quick smoke tests, raise once pipeline "
+             "is confirmed working end to end."
+    )
+    parser.add_argument(
+        "--strength", type=float, default=0.4,
+        help="Img2img strength for Stage 2 (0-1). Low = stays closer to source photo "
+             "identity. Raise slightly (toward 0.5) only if motion looks too frozen."
+    )
+    parser.add_argument(
+        "--conditioning_scale", type=float, default=1.0,
+        help="ControlNet pose conditioning scale for Stage 2."
+    )
+
     args = parser.parse_args()
-    
+
     try:
         result = generate(
             photo_path=args.photo,
             driving_video_path=args.driving_video,
             audio_path=args.audio,
             output_dir=args.output_dir,
-            enhance=args.enhance
+            enhance=args.enhance,
+            test_fps=args.test_fps,
+            num_inference_steps=args.steps,
+            strength=args.strength,
+            conditioning_scale=args.conditioning_scale,
         )
         print(f"\n✓ SUCCESS: {result}")
         return 0
