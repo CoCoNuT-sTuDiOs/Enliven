@@ -1,5 +1,4 @@
 """
-pipeline.py — Three-stage avatar animation pipeline
 
 Stages:
 1. LivePortrait: photo + driving_video → expression/pose transfer
@@ -7,6 +6,7 @@ Stages:
 3. GFPGAN (optional): enhance face quality frame-by-frame
 """
 import os
+import shutil
 from src.expression_transfer import transfer_expression
 from src.lip_sync import sync_lips
 from src.enhance import FaceEnhancer
@@ -19,19 +19,8 @@ def generate(
     enhance: bool = False,
     liveportrait_dir: str = None
 ) -> str:
-    """
-    Generate avatar video: photo + driving_video + optional audio.
+    """Generate avatar video: photo + driving_video + optional audio."""
     
-    Inputs:
-    - photo_path: Avatar headshot
-    - driving_video_path: Motion/expression source
-    - audio_path: Optional audio (<=10 sec)
-    - output_dir: Results directory
-    - enhance: Apply GFPGAN face enhancement
-    - liveportrait_dir: LivePortrait repo path
-    
-    Returns: Final MP4 path
-    """
     print("[ENLIVEN] Starting pipeline...")
     print(f"  photo: {photo_path}")
     print(f"  video: {driving_video_path}")
@@ -43,7 +32,6 @@ def generate(
     try:
         # Auto-detect LivePortrait
         if liveportrait_dir is None:
-            import os.path
             home = os.path.expanduser("~")
             possible_paths = [
                 os.path.join(home, "LivePortrait"),
@@ -59,13 +47,33 @@ def generate(
         
         print(f"[ENLIVEN] LivePortrait: {liveportrait_dir}")
         
+        # Copy inputs to writable location (Kaggle datasets are read-only)
+        print("[ENLIVEN] Copying inputs to writable location...")
+        photo_work = os.path.join(output_dir, "source.jpg")
+        video_work = os.path.join(output_dir, "driving.mp4")
+        shutil.copy(photo_path, photo_work)
+        shutil.copy(driving_video_path, video_work)
+        if audio_path:
+            audio_work = os.path.join(output_dir, "audio.wav")
+            # Convert to WAV if needed
+            if audio_path.lower().endswith(".mp3"):
+                from pydub import AudioSegment
+                print("[ENLIVEN] Converting MP3 to WAV...")
+                audio = AudioSegment.from_mp3(audio_path)
+                audio.export(audio_work, format="wav")
+                print("[ENLIVEN] ✓ Converted to WAV")
+            else:
+                shutil.copy(audio_path, audio_work)
+            audio_path = audio_work
+        print(f"[ENLIVEN] ✓ Inputs copied to {output_dir}")
+        
         # Stage 1: LivePortrait
         print("[ENLIVEN] Stage 1: LivePortrait (expression + pose)...")
         liveportrait_output = transfer_expression(
-            source_path=photo_path,
-            driving_video_path=driving_video_path,
+            source_path=photo_work,
+            driving_video_path=video_work,
             liveportrait_dir=liveportrait_dir,
-            output_dir=output_dir,
+            output_dir=os.path.abspath(output_dir),
             flag_use_half_precision=True
         )
         print(f"[ENLIVEN] ✓ Stage 1 done: {liveportrait_output}")

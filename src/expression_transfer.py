@@ -25,7 +25,10 @@ def transfer_expression(
         "--output_dir", output_dir,
     ]
     if not flag_use_half_precision:
-        cmd += ["--no_flag_use_half_precision"]  # tyro auto-generates --no_ flags for bool fields
+        cmd += ["--no_flag_use_half_precision"]
+    
+    print(f"[transfer_expression] Running: {' '.join(cmd)}")
+    print(f"[transfer_expression] CWD: {liveportrait_dir}")  # tyro auto-generates --no_ flags for bool fields
 
     result = subprocess.run(
         cmd,
