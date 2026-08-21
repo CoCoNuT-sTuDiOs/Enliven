@@ -6,14 +6,12 @@ import cv2
 import torch
 import numpy as np
 from pathlib import Path
-from src.utils.device import get_device
 
 class FaceEnhancer:
     def __init__(self):
-        self.device = get_device()
+        self.available = False
         try:
             from gfpgan import GFPGANer
-            # Download model on first use
             self.gfpgan = GFPGANer(
                 scale=2,
                 model_path="https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth",
@@ -21,25 +19,25 @@ class FaceEnhancer:
                 arch="clean",
                 channel_multiplier=2,
                 bg_upsampler=None,
-                device=self.device
+                device="cuda" if torch.cuda.is_available() else "cpu"
             )
             self.available = True
+            print("[enhance] GFPGAN initialized successfully")
         except Exception as e:
-            print(f"[enhance] Warning: GFPGAN init failed: {e}")
+            print(f"[enhance] GFPGAN init failed: {e}")
             self.gfpgan = None
             self.available = False
     
     def enhance_video(self, video_path: str, output_path: str) -> str:
         """
         Frame-by-frame GFPGAN enhancement of video.
-        Reads video, enhances each frame, writes to output MP4.
         
         Args:
-            video_path: Input video (from Wav2Lip or LivePortrait)
+            video_path: Input video (from LivePortrait)
             output_path: Output enhanced video
         
         Returns:
-            output_path if successful, original video_path if enhancement skipped
+            output_path if enhanced, video_path if enhancement unavailable
         """
         if not self.available:
             print("[enhance] GFPGAN unavailable, returning original")
@@ -61,7 +59,7 @@ class FaceEnhancer:
         out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
         
         if not out.isOpened():
-            print(f"[enhance] Failed to open output video writer")
+            print(f"[enhance] Failed to open output writer, returning original")
             cap.release()
             return video_path
         
@@ -76,20 +74,26 @@ class FaceEnhancer:
                 
                 # Enhance this frame
                 try:
-                    _, _, enhanced = self.gfpgan.enhance(frame, has_aligned=False, only_center_face=True, paste_back=True, weight=0.5)
-                    # Resize back to original if GFPGAN changed dimensions
+                    _, _, enhanced = self.gfpgan.enhance(
+                        frame, 
+                        has_aligned=False, 
+                        only_center_face=True, 
+                        paste_back=True, 
+                        weight=0.5
+                    )
+                    # Resize back to original if needed
                     if enhanced.shape[:2] != frame.shape[:2]:
                         enhanced = cv2.resize(enhanced, (width, height))
                     out.write(enhanced)
                 except Exception as e:
-                    print(f"[enhance] Warning: Frame {frame_count} failed: {e}, using original")
+                    print(f"[enhance] Frame {frame_count} failed: {e}, using original")
                     out.write(frame)
                 
                 if frame_count % 30 == 0:
                     print(f"[enhance] Progress: {frame_count}/{total_frames}")
         
         except Exception as e:
-            print(f"[enhance] Error during enhancement: {e}")
+            print(f"[enhance] Error: {e}")
         
         finally:
             cap.release()
