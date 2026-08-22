@@ -1,10 +1,18 @@
-DWPose/
-checkpoints/
-models/
-*.onnx
-*.pth
-*.pt
-*.safetensors
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
-.ipynb_checkpoints/
+**/__pycache__/
+*.py[cod]
+**/*.py[cod]
+*$py.class
+
+# Model weights
+#**/*.pth
+#**/*.onnx
+
+# Ipython notebook
+*.ipynb
+
+# Temporary files or benchmark resources
+animations/*
+tmp/*
+gradio_cached_examples/

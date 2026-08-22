@@ -1,0 +1,103 @@
+# LICENSE
+
+## Enliven: MIT License
+
+Copyright (c) 2026 CoCoNuT-dUmMy (CoCoNuT-sTuDiOs)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## Third-Party Licenses
+
+Enliven includes and depends on the following open-source projects, each with their own licenses:
+
+### LivePortrait
+- **License:** MIT License
+- **Repository:** https://github.com/KwaiVGI/LivePortrait
+- **Copyright:** Kuaishou Visual Generation and Interaction Center
+- **Use:** Expression and pose transfer engine (bundled in `vendor/liveportrait/`)
+
+### MediaPipe
+- **License:** Apache License 2.0
+- **Repository:** https://github.com/google/mediapipe
+- **Copyright:** Google
+- **Use:** Face detection and landmark extraction
+
+### GFPGAN
+- **License:** Apache License 2.0
+- **Repository:** https://github.com/TencentARC/GFPGAN
+- **Copyright:** Tencent ARC Lab
+- **Use:** Optional face enhancement (not required for core functionality)
+
+### OpenCV
+- **License:** Apache License 2.0
+- **Repository:** https://github.com/opencv/opencv
+- **Copyright:** OpenCV Team
+- **Use:** Image processing utilities
+
+---
+
+## Commercial Use
+
+Enliven is **fully commercial-safe**, Enliven uses only permissive open-source licenses.
+
+You are explicitly permitted to:
+- Use Enliven for commercial projects
+- Sell products or services based on Enliven
+- Redistribute modified versions
+- Include Enliven in proprietary software
+
+The only requirement is attribution — include the LICENSE file with any distribution.
+
+---
+
+## Important Notes
+
+### What You Can Do
+✅ Use for commercial projects
+✅ Modify the source code
+✅ Redistribute with modifications
+✅ Include in proprietary applications
+✅ Sell products using Enliven
+
+### What You Must Do
+✅ Include a copy of this LICENSE file
+✅ Include copyright notices for bundled projects (LivePortrait, etc.)
+
+### What You Cannot Do
+❌ Remove license headers or attribution
+❌ Claim you created what you didn't
+❌ Hold CoCoNuT-sTuDiOs, or contributors liable for your use
+
+---
+
+## Disclaimer
+
+**Enliven is provided "as-is" without warranty of any kind.** The authors assume no liability for any damages or issues arising from its use. Always test thoroughly before deploying to production.
+
+---
+
+## Questions About Licensing?
+
+If you have questions about what you can or cannot do with Enliven under the MIT license, refer to the official MIT License definition at https://opensource.org/licenses/MIT or consult with a legal professional.
+
+---
+
+*Last Updated: August 22, 2026*

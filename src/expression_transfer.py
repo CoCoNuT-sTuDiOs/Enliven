@@ -5,6 +5,7 @@ expression_transfer.py
 
 import os
 import subprocess
+import sys
 import glob
 
 
@@ -19,10 +20,11 @@ def transfer_expression(
     driving_video_path = os.path.abspath(driving_video_path)
 
     cmd = [
-        "python", "inference.py",
+        sys.executable, "inference.py",
         "--source", source_path,
         "--driving", driving_video_path,
         "--output_dir", output_dir,
+        "--flag_force_cpu",
     ]
     if not flag_use_half_precision:
         cmd += ["--no_flag_use_half_precision"]
