@@ -17,17 +17,29 @@ _pipeline = None
 
 
 def init_models():
-    """Call once at Space startup. Model placement at import time (not inside a
-    @spaces.GPU call) is the documented ZeroGPU pattern — actual GPU kernel execution
-    only needs to happen inside the decorated function, not model construction."""
+    """Call once at Space startup. NOTE: this intentionally does NOT build the
+    LivePortraitPipeline anymore — the Cropper inside it creates ONNX sessions
+    (human_landmark_runner, face_analysis_wrapper) that bind to whatever execution
+    provider is available at construction time. On ZeroGPU, no GPU is attached at
+    cold start, so building here silently locks those sessions onto CPU forever,
+    even once a GPU is attached to a later request. Pipeline construction is
+    deferred to the first run_job() call instead, which only happens inside an
+    @spaces.GPU-decorated request where a real GPU is actually attached.
+    """
+    print("[JOB_PROCESSOR] Skipping pipeline load at cold start (deferred to first GPU job).")
+
+
+def _ensure_pipeline_loaded():
     global _pipeline
-    print("[JOB_PROCESSOR] Loading LivePortrait pipeline...")
-    _pipeline = LivePortraitPipeline(inference_cfg=InferenceConfig(), crop_cfg=CropConfig())
-    print("[JOB_PROCESSOR] Pipeline loaded and ready.")
+    if _pipeline is None:
+        print("[JOB_PROCESSOR] Loading LivePortrait pipeline (inside GPU context)...")
+        _pipeline = LivePortraitPipeline(inference_cfg=InferenceConfig(), crop_cfg=CropConfig())
+        print("[JOB_PROCESSOR] Pipeline loaded and ready.")
 
 
 def run_job(photo_path: str, driving_video_path: str, output_dir: str = "results") -> str:
     """Runs one LivePortrait generation. Returns path to the final .mp4."""
+    _ensure_pipeline_loaded()
     print(f"[RUN_JOB] photo={photo_path} driving_video={driving_video_path}")
     os.makedirs(output_dir, exist_ok=True)
 

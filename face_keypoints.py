@@ -1,11 +1,6 @@
 """
 face_keypoints.py Extract face keypoints from driving video using DWPose
 
-FIX (Aug 2026): Previous version imported a non-existent `dwpose` package
-and assumed a `.keypoints` attribute API. The real package is
-`controlnet_dwpose` (pip install controlnet_dwpose) — it returns a DICT per
-frame: {'bodies': (N,18,2), 'hands': (N,42,2), 'faces': (N,68,2), plus
-'*_score' confidence arrays}, N = number of detected people.
 
 We pull nose/eyes/ears from 'bodies' (COCO-style ordering index 0=nose,
 1=left_eye, 2=right_eye, 3=left_ear, 4=right_ear), not 'faces', because the
