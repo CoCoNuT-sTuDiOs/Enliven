@@ -33,8 +33,19 @@ def _ensure_pipeline_loaded():
     global _pipeline
     if _pipeline is None:
         print("[JOB_PROCESSOR] Loading LivePortrait pipeline (inside GPU context)...")
-        _pipeline = LivePortraitPipeline(inference_cfg=InferenceConfig(), crop_cfg=CropConfig())
+        _pipeline = LivePortraitPipeline(
+            inference_cfg=InferenceConfig(flag_force_cpu=True),  # TEMP: local CPU-only test — revert before pushing
+            crop_cfg=CropConfig(),
+        )
         print("[JOB_PROCESSOR] Pipeline loaded and ready.")
+
+#OPEN THIS WHEN U WANT TO PUSH TO HUGGING FACE AND COMMENT OUT FORCE CPU
+#def _ensure_pipeline_loaded():
+#    global _pipeline
+#    if _pipeline is None:
+#        print("[JOB_PROCESSOR] Loading LivePortrait pipeline (inside GPU context)...")
+#        _pipeline = LivePortraitPipeline(inference_cfg=InferenceConfig(), crop_cfg=CropConfig())
+#        print("[JOB_PROCESSOR] Pipeline loaded and ready.")
 
 
 def run_job(photo_path: str, driving_video_path: str, output_dir: str = "results") -> str:
@@ -47,6 +58,8 @@ def run_job(photo_path: str, driving_video_path: str, output_dir: str = "results
         source=photo_path,
         driving=driving_video_path,
         output_dir=output_dir,
+        flag_force_cpu=True,  # TEMP: local CPU-only test — revert before pushing, production has a real GPU
+
     )
     wfp, wfp_concat = _pipeline.execute(args)
     print(f"[RUN_JOB] ✓ done: {wfp}")

@@ -38,5 +38,7 @@ src/utils/dependencies/XPose/models/UniPose/ops/MultiScaleDeformableAttention.eg
 *.jpeg
 *.gif
 *.png
+!vendor/liveportrait/src/utils/resources/mask_template.png
+.env
 enliven_output/
 vendor/liveportrait/pretrained_weights/
