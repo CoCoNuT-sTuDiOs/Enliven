@@ -22,6 +22,7 @@ gradio_cached_examples/
 *.gif
 *.png
 !vendor/liveportrait/src/utils/resources/mask_template.png
+!Icon.png
 .env
 enliven_output/
 vendor/liveportrait/assets/examples/
