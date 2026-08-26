@@ -98,7 +98,7 @@ def _get_video_duration_seconds(video_path: str) -> float:
 
 # ---- ZeroGPU wrapper ----
 
-@spaces.GPU(duration=120)
+@spaces.GPU(duration=150)
 def _run_job_gpu(photo_path, driving_video_path):
     print(f"[GPU] job started on GPU worker: photo={photo_path} driving_video={driving_video_path}")
     result_path = run_job(photo_path=photo_path, driving_video_path=driving_video_path)

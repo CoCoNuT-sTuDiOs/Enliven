@@ -58,8 +58,7 @@ def run_job(photo_path: str, driving_video_path: str, output_dir: str = "results
         source=photo_path,
         driving=driving_video_path,
         output_dir=output_dir,
-        flag_force_cpu=True,  # TEMP: local CPU-only test — revert before pushing, production has a real GPU
-
+        scale=1.7,
     )
     wfp, wfp_concat = _pipeline.execute(args)
     print(f"[RUN_JOB] ✓ done: {wfp}")
