@@ -33,3 +33,10 @@ test.jpeg
 test.jpg
 test_cropped_output.jpg
 test_vid.mp4
+# RVC voice-swap model weights (re-downloaded by setup script, not committed)
+vendor/rvc/assets/hubert/
+vendor/rvc/assets/rmvpe/
+
+# RVC voice-swap model weights (re-downloaded by setup script, not committed)
+vendor/rvc/assets/hubert/
+vendor/rvc/assets/rmvpe/
